@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>FP 2日目：AIプランニング＋AIヒアリング（完全版）</title>
+<style>
+  body { font-family: sans-serif; margin: 20px; }
+  pre { white-space: pre-wrap; border:1px solid #ccc; padding:10px; }
+  textarea { width:100%; height:100px; }
+  .block { margin-top:20px; }
+  .example { font-size:12px; color:#555; margin-top:4px; }
+</style>
+</head>
+<body>
+
+<h1>2日目：AIプランニング＋AIヒアリング（FP代行）</h1>
+
+<!-- CSV読み込み -->
+<div class="block">
+  <h3>1日目のCSVを読み込む</h3>
+  <input type="file" id="csvFile" accept=".csv">
+  <button onclick="loadCSV()">読み込む</button>
+</div>
+
+<!-- 1日目データ表示 -->
+<div class="block">
+  <h3>1日目データ</h3>
+  <pre id="day1data">CSVを読み込むと表示されます</pre>
+</div>
+
+<!-- AIプランニング案 -->
+<div class="block">
+  <h3>AIプランニング案（自動生成）</h3>
+  <pre id="autoMemo">CSV読み込み後に自動生成されます</pre>
+</div>
+
+<!-- 2日目ヒアリング（AI入力例つき） -->
+<div class="block">
+  <h3>2日目ヒアリング（AIが案内）</h3>
+
+  <label>前回からの変化:
+    <textarea id="change"></textarea>
+    <div class="example" id="ex_change"></div>
+  </label>
+
+  <label>住宅:
+    <textarea id="housePlan"></textarea>
+    <div class="example" id="ex_house"></div>
+  </label>
+
+  <label>教育資金:
+    <textarea id="eduPlan"></textarea>
+    <div class="example" id="ex_edu"></div>
+  </label>
+
+  <label>老後資金:
+    <textarea id="retirePlan"></textarea>
+    <div class="example" id="ex_retire"></div>
+  </label>
+
+  <label>保険見直し:
+    <textarea id="insPlan"></textarea>
+    <div class="example" id="ex_ins"></div>
+  </label>
+
+  <label>投資方針:
+    <textarea id="invPlan"></textarea>
+    <div class="example" id="ex_inv"></div>
+  </label>
+</div>
+
+<!-- FP最終案 -->
+<div class="block">
+  <h3>FP最終プランニング（AI代行）</h3>
+  <textarea id="fpEdit"></textarea>
+  <button onclick="exportFinal()">最終CSV出力</button>
+</div>
+
+<script>
+// CSV読み込み
+function loadCSV() {
+  const file = csvFile.files[0];
+  if (!file) { alert("CSVを選択してください"); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    day1data.textContent = text;
+
+    const lines = text.split("\n").map(l => l.split(","));
+    const obj = {};
+    lines.forEach(row => {
+      if (row.length >= 2) obj[row[0]] = row[1];
+    });
+
+    autoMemo.textContent =
+      aiPlanningEngine(obj)
+      + "\n\n"
+      + aiLifeEventSimulation(obj)
+      + "\n\n"
+      + aiFpEngine(obj);
+
+    generateExamples(obj);
+  };
+  reader.readAsText(file, "UTF-8");
+}
+
+// AI入力例自動生成
+function generateExamples(d) {
+  const income = Number(d["月収"] || 0);
+  const fixed = Number(d["固定費"] || 0);
+  const age = Number(d["年齢"] || 0);
+  const family = d["家族構成"] || "";
+  const house = d["居住形態"] || "";
+
+  ex_change.textContent = "例：収入の増減／固定費の変化／家族のイベント";
+
+  ex_house.textContent =
+    income > 30 && fixed < 20
+      ? "例：3年以内に3500〜4000万円／頭金300万円／月10万円以内／固定金利"
+      : "例：予算3000万円前後／返済は月8〜10万円以内";
+
+  ex_edu.textContent =
+    family.includes("子")
+      ? "例：私立中学希望／大学は私立文系／教育費総額1000万円"
+      : "例：教育費は現時点では不要";
+
+  ex_retire.textContent =
+    age >= 45
+      ? "例：65歳退職／老後生活費25万円／年金12万円"
+      : "例：老後資金はまだ余裕あり／積立を開始したい";
+
+  ex_ins.textContent =
+    house.includes("ローン")
+      ? "例：生命保険は必要／医療保険継続／がん保険検討"
+      : "例：医療保険のみで十分／生命保険は過剰の可能性";
+
+  ex_inv.textContent =
+    income - fixed > 50000
+      ? "例：つみたてNISA 月2〜3万円／リスク中程度／長期投資20年以上"
+      : "例：つみたてNISA 月1万円／低リスク／長期投資";
+}
+
+// AIプランニング案
+function aiPlanningEngine(d) {
+  let plan = "";
+  const income = Number(d["月収"] || 0);
+  const fixed = Number(d["固定費"] || 0);
+  const cf = income - fixed;
+
+  plan += "【AIプランニング】\n\n";
+  plan += `月収：${income}万円\n固定費：${fixed}万円\n余剰：${cf}万円\n`;
+  plan += cf < 5 ? "→ 固定費見直しが必要\n\n" : "→ 健全で投資余力あり\n\n";
+
+  plan += "■ライフイベント\n";
+  plan += `${d["ライフイベント"] || "未入力"}\n\n";
+
+  return plan;
+}
+
+// AIライフイベント試算
+function aiLifeEventSimulation(d) {
+  let sim = "【AIライフイベント試算】\n\n";
+  sim += "住宅：3000〜4500万円\n教育：500〜900万円\n老後：900〜1080万円\n";
+  return sim;
+}
+
+// FP所長AI判断
+function aiFpEngine(d) {
+  let out = "【FP所長AIの判断】\n\n";
+  const income = Number(d["月収"] || 0);
+  const fixed = Number(d["固定費"] || 0);
+  const cf = income - fixed;
+
+  out += cf < 5 ? "固定費見直しが最優先\n" : "投資余力を活かすべき\n";
+  out += "ライフイベント時系列化が必要\n老後資金の不足額を次回提示\n";
+  return out;
+}
+
+// CSV出力（1日目の項目を完全保持）
+function exportFinal() {
+  const rows = [
+    ["氏名", obj["氏名"]],
+    ["年齢", obj["年齢"]],
+    ["家族構成", obj["家族構成"]],
+    ["居住形態", obj["居住形態"]],
+    ["勤務形態", obj["勤務形態"]],
+    ["月収", obj["月収"]],
+    ["固定費", obj["固定費"]],
+    ["貯蓄", obj["貯蓄"]],
+    ["投資", obj["投資"]],
+    ["保険", obj["保険"]],
+    ["ライフイベント", obj["ライフイベント"]],
+    ["優先したいこと", obj["優先したいこと"]],
+    ["不安", obj["不安"]],
+
+    ["前回からの変化", change.value],
+    ["住宅", housePlan.value],
+    ["教育資金", eduPlan.value],
+    ["老後資金", retirePlan.value],
+    ["保険見直し", insPlan.value],
+    ["投資方針", invPlan.value],
+
+    ["FP最終案", fpEdit.value]
+  ];
+
+  const csv = rows.map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "fp_day2_output.csv";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>

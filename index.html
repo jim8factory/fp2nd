@@ -150,6 +150,47 @@ function exportFinal() {
   URL.revokeObjectURL(url);
 }
 </script>
+function aiPlanningEngine(d) {
+  let plan = "";
+
+  plan += "【AIプランニング（FP自動分析）】\n\n";
+
+  // 1. キャッシュフロー診断
+  const income = Number(d["月収"] || 0);
+  const fixed = Number(d["固定費"] || 0);
+  const cf = income - fixed;
+
+  plan += "■キャッシュフロー診断\n";
+  plan += `月収：${income}円\n固定費：${fixed}円\n`;
+  plan += `→ 月間余剰：${cf}円\n`;
+  if (cf < 30000) plan += "※ 余剰が少ないため、固定費の見直しが必要です。\n";
+  else plan += "余剰は確保されており、貯蓄・投資の余力があります。\n";
+  plan += "\n";
+
+  // 2. ライフイベント分析
+  plan += "■ライフイベント分析\n";
+  plan += `${d["ライフイベント"] || "未入力"}\n`;
+  plan += "→ 時期・金額の仮設定を次回行います。\n\n";
+
+  // 3. 保険診断
+  plan += "■保険診断\n";
+  plan += `${d["保険"] || "未入力"}\n`;
+  plan += "→ 過不足の可能性を次回チェックします。\n\n";
+
+  // 4. 投資方針
+  plan += "■投資方針\n";
+  plan += `${d["投資"] || "未入力"}\n`;
+  plan += "→ リスク許容度に合わせて最適化します。\n\n";
+
+  // 5. FPが次にやるべきこと
+  plan += "■次回FPが行う作業\n";
+  plan += "・ライフイベントの時系列化\n";
+  plan += "・必要資金の試算\n";
+  plan += "・キャッシュフロー表の作成\n";
+  plan += "・保険・投資・住宅の最適化案\n";
+
+  return plan;
+}
 
 </body>
 </html>

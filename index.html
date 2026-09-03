@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>FP 2日目プランニング</title>
+<style>
+  body { font-family: sans-serif; margin: 20px; }
+  pre { white-space: pre-wrap; border:1px solid #ccc; padding:10px; }
+  textarea { width:100%; height:120px; }
+  .block { margin-top:20px; }
+</style>
+</head>
+<body>
+
+<h1>2日目：FPプランニング編集</h1>
+
+<!-- CSV読み込み -->
+<div class="block">
+  <h3>1日目CSV読み込み</h3>
+  <input type="file" id="csvFile" accept=".csv">
+  <button onclick="loadCSV()">読み込む</button>
+</div>
+
+<!-- 1日目データ表示 -->
+<div class="block">
+  <h3>1日目ヒアリング内容</h3>
+  <pre id="day1data">CSVを読み込むと表示されます</pre>
+</div>
+
+<!-- 自動プランニングメモ -->
+<div class="block">
+  <h3>自動生成プランニングメモ</h3>
+  <pre id="autoMemo">CSV読み込み後に自動生成されます</pre>
+</div>
+
+<!-- FP編集欄 -->
+<div class="block">
+  <h3>FP編集（最終プランニング）</h3>
+  <textarea id="fpEdit" placeholder="FPが最終調整を書く欄"></textarea>
+  <button onclick="exportFinal()">最終CSV出力</button>
+</div>
+
+<script>
+// CSV読み込み
+function loadCSV() {
+  const file = csvFile.files[0];
+  if (!file) { alert("CSVを選択してください"); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    day1data.textContent = text;
+
+    // CSV → オブジェクト化
+    const lines = text.split("\n").map(l => l.split(","));
+    const obj = {};
+    lines.forEach(row => {
+      if (row.length >= 2) obj[row[0]] = row[1];
+    });
+
+    // 自動プランニングメモ生成
+    autoMemo.textContent = generatePlanningMemo(obj);
+  };
+  reader.readAsText(file, "UTF-8");
+}
+
+// 自動プランニングメモ生成
+function generatePlanningMemo(d) {
+  let m = "";
+  m += "【プランニングメモ（自動生成）】\n\n";
+
+  m += "■現状\n";
+  m += `家族構成：${d["家族構成"] || ""}\n`;
+  m += `居住：${d["居住形態"] || ""}\n`;
+  m += `勤務：${d["勤務形態"] || ""}\n`;
+  m += `月収：${d["月収"] || ""}／固定費：${d["固定費"] || ""}\n`;
+  m += `貯蓄：${d["貯蓄"] || ""}／投資：${d["投資"] || ""}\n\n`;
+
+  m += "■相談者の希望\n";
+  m += `ライフイベント：${d["ライフイベント"] || ""}\n`;
+  m += `優先事項：${d["優先したいこと"] || ""}\n`;
+  m += `不安・こだわり：${d["不安・こだわり"] || ""}\n\n`;
+
+  m += "■FP初期方針\n";
+  m += "・キャッシュフローの健全性を確認\n";
+  m += "・優先度の高いイベントから資金計画を作成\n";
+  m += "・保険・投資・住宅ローンの見直し余地を確認\n";
+  m += "・リスク許容度に合わせた提案を準備\n";
+
+  return m;
+}
+
+// 最終CSV出力
+function exportFinal() {
+  const finalMemo = fpEdit.value.replace(/\n/g, " ");
+  const auto = autoMemo.textContent.replace(/\n/g, " ");
+
+  const rows = [
+    ["--- 1日目データ ---"],
+    [day1data.textContent.replace(/\n/g, " ")],
+    ["--- 自動プランニングメモ ---"],
+    [auto],
+    ["--- FP最終プランニング ---"],
+    [finalMemo]
+  ];
+
+  const csv = rows.map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "fp_final_plan.csv";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>
